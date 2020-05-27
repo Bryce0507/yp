@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yp.dao.ActivitySaleRecordMapper">
+
+  <!--  <select id="getShopUserSale" resultType="com.yp.vo.ShopUserRecordsVO">
+        SELECT user_id userId,COUNT(*) quantity,SUM(product_price) saleMoney FROM `activity_sale_record` where 1=1
+        <if test="null != activityId and '' != activityId">
+            AND activity_id=#{activityId}
+        </if>
+        <if test="null != shopCode and '' != shopCode">
+            AND shop_code=#{shopCode}
+        </if>
+        <if test="null != approveStatus and '' != approveStatus">
+            AND approve_status=#{approveStatus}
+        </if>
+        GROUP BY user_id;
+    </select>-->
+</mapper>

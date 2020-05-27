@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="CompilerConfiguration">
+    <annotationProcessing>
+      <profile name="Maven default annotation processors profile" enabled="true">
+        <sourceOutputDir name="target/generated-sources/annotations" />
+        <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
+        <outputRelativeToContentRoot value="true" />
+        <module name="yp.wx.api.service" />
+        <module name="yp-log" />
+        <module name="yp-common" />
+        <module name="yp.manage.service" />
+        <module name="yp-security" />
+        <module name="yp-manage-service" />
+        <module name="yp-wx-api-service" />
+        <module name="yp.log" />
+      </profile>
+    </annotationProcessing>
+  </component>
+  <component name="JavacSettings">
+    <option name="ADDITIONAL_OPTIONS_OVERRIDE">
+      <module name="yp-common" options="-parameters" />
+      <module name="yp-log" options="-parameters" />
+      <module name="yp-manage-service" options="-parameters" />
+      <module name="yp-security" options="-parameters" />
+      <module name="yp-wx-api-service" options="-parameters" />
+      <module name="yp.log" options="-parameters" />
+      <module name="yp.manage.service" options="-parameters" />
+      <module name="yp.wx.api.service" options="-parameters" />
+    </option>
+  </component>
+</project>

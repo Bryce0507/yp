@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yp.dao.SysUserMapper">
+
+    <select id="getUserVosPage" resultType="com.yp.entity.SysUser">
+        SELECT
+        `user`.user_id,
+        `user`.username,
+        `user`.phone,
+        `user`.email,
+        `user`.headimgurl,
+        `user`.dept_id AS deptId,
+        `user`.create_time,
+        `user`.update_time,
+        `user`.del_flag,
+        `user`.lock_flag,
+        d.name AS deptName
+        FROM
+        sys_user AS `user`
+        LEFT JOIN sys_dept AS d ON d.dept_id = `user`.dept_id
+        <where>
+            <if test="query.username != null and query.username != ''">
+                and `user`.username LIKE CONCAT('%',#{query.username},'%')
+            </if>
+            <if test="query.deptId != null and query.deptId != ''">
+                and `user`.dept_id in
+                <foreach item="item" collection="query.deptList" separator="," open="(" close=")" index="">
+                    #{item, jdbcType=INTEGER}
+                </foreach>
+            </if>
+
+        and `user`.del_flag = '0'
+        </where>
+        ORDER BY `user`.create_time DESC
+    </select>
+
+</mapper>

@@ -1,0 +1,67 @@
+jasypt:
+  encryptor:
+    password: EbfYkitulv73I2p0mXI50JMXoaxZTKJ1
+jwt:
+  header: Authorization
+  tokenHead: 'Bearer '
+mybatis-plus:
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+  global-config:
+    db-config:
+      logic-delete-field: delFlag
+      update-strategy: ignored
+  mapper-locations: classpath:mapper/*.xml
+  typeAliasesPackage: com.yp.entity
+wx:
+  appid: wxbd739f600e019b75
+  secret: de24ca7c12ce05eaf11afa90707dd00d
+server:
+  http2:
+    enabled: true
+  undertow:
+    buffer-size: 2048
+    direct-buffers: true
+    io-threads: 4
+    worker-threads: 20
+spring:
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      connection-test-query: SELECT 1
+      max-lifetime: 30000
+      maximum-pool-size: 10
+      minimum-idle: 3
+    password: root
+    type: com.zaxxer.hikari.HikariDataSource
+    url: jdbc:mysql://127.0.0.1:3306/yp?useUnicode=true&characterEncoding=UTF-8&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=Asia/Shanghai
+    username: root
+  main:
+    allow-bean-definition-overriding: true
+  redis:
+    database: 1
+    host: localhost
+    jedis:
+      pool:
+        max-active: 8
+        max-idle: 8
+        max-wait: 30000ms
+        min-idle: 1
+    password: ''
+    port: 6379
+    timeout: 6000ms
+
+uploadFileServerPathPrefix: /Users/lihaodong/Desktop/files
+
+file:
+  staticAccessPath:
+    /file/**
+  #文件上传目录（注意Linux和Windows上的目录结构不同）
+  #file.uploadFolder=/root/uploadFiles/
+  uploadFolder:
+    c://data/
+  address:
+    localhost;8081/file
+circle:
+  message:
+    当前活动{0}人发布业绩，快了解一下吧！
