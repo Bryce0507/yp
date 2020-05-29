@@ -1,5 +1,6 @@
 package com.yp.vo.manage.sale;
 
+import com.alibaba.fastjson.annotation.JSONField;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
@@ -11,6 +12,10 @@ import java.math.BigDecimal;
  */
 @Data
 public class ProductDetailVO {
+
+    @ApiModelProperty(value = "活动产品销售记录ID")
+    @JSONField(name = "pkid")
+    private Integer saleRecordId;
 
     @ApiModelProperty(value = "产品id")
     private Integer productId;

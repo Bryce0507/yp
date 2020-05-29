@@ -31,4 +31,46 @@
       </where>
       ORDER BY so.sale_time DESC
     </select>
+
+
+  <select id="queryStaffSale" resultType="com.yp.vo.manage.sale.StaffSaleVO">
+    SELECT
+      t1.user_id AS user_id,
+      t1.quantity AS quantity,
+      t2.saleMoney AS saleMoney,
+      t1.approveQuantity AS approveQuantity,
+      t2.approveSaleMoney AS approveSaleMoney
+    FROM
+	(
+    SELECT
+    	user_id AS user_id,
+    	sum( CASE WHEN sale_order_status IN ( 1, 2 ) THEN 1 ELSE 0 END ) AS quantity,
+    	SUM( CASE WHEN sale_order_status = 0 THEN 1 ELSE 0 END ) AS approveQuantity
+    FROM
+    	activity_sale_order
+    WHERE
+    	activity_id = 78
+    GROUP BY
+    	user_id
+    	) t1
+    	LEFT JOIN (
+    SELECT
+    	aso.user_id AS user_id,
+    	SUM( CASE WHEN asr.approve_status = 1 THEN product_price ELSE 0 END ) AS saleMoney,
+    	SUM( CASE WHEN asr.approve_status = 0 THEN product_price ELSE 0 END ) AS approveSaleMoney
+    FROM
+    	activity_sale_order aso
+    	LEFT JOIN activity_sale_record asr ON aso.pkid = asr.sale_order_id
+    WHERE
+    	aso.activity_id = 78
+    GROUP BY
+    	aso.user_id
+    	) t2 ON t1.user_id = t2.user_id
+      <if test='orderUntil!=null and orderUntil == 0 '>
+          order by quantity desc
+      </if>
+      <if test='orderUntil!=null and orderUntil == 1 '>
+          order by saleMoney desc
+      </if>
+  </select>
 </mapper>

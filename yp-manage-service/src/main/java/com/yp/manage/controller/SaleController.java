@@ -3,6 +3,7 @@ package com.yp.manage.controller;
 import com.alibaba.fastjson.JSONArray;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.yp.common.constant.SaleOrderStatus;
 import com.yp.common.utils.EntityConverterUtil;
 import com.yp.common.utils.R;
 import com.yp.dto.manage.sale.*;
@@ -23,6 +24,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.util.CollectionUtils;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -197,11 +199,38 @@ public class SaleController {
         return R.ok(staffSaleVOS);
     }
 
+
+    @ApiOperation(value = "员工业绩统计(新)")
+    @PostMapping("/staffCount")
+//    @PreAuthorize("hasAuthority('sys:sale:staff')")
+    public R<List<StaffSaleVO>> staffCount(@RequestBody ActivityUserNameDTO activityIdDTO) {
+        Activity activity=activityService.getById(activityIdDTO.getActivityId());
+//        List<StaffSaleVO> staffSaleVOS=saleRecordService.queryStaffSale(activityIdDTO.getActivityId(),activity.getTargetUntil());
+        List<StaffSaleVO> staffSaleVOS = activitySaleOrderService.queryStaffSale(activityIdDTO.getActivityId(), activity.getTargetUntil());
+        for (StaffSaleVO staffSaleVO: staffSaleVOS) {
+            SysUser sysUser=userService.getById(staffSaleVO.getUserId());
+            if(sysUser!=null){
+                staffSaleVO.setTrueName(sysUser.getTrueName());
+                staffSaleVO.setPhone(sysUser.getPhone());
+                Company company=companyService.getById(sysUser.getCompanyId());
+                if(company!=null){
+                    staffSaleVO.setCompanyName(company.getCompayName());
+                }
+                staffSaleVO.setUnit(activity.getTargetUntil());
+            }
+        }
+        if(activityIdDTO.getTrueName()!=null&&StringUtils.isNotEmpty(activityIdDTO.getTrueName())){
+            List<StaffSaleVO> newshopCountVO= staffSaleVOS.stream().filter(shopCount -> shopCount.getTrueName().contains(activityIdDTO.getTrueName())).collect(Collectors.toList());
+            return R.ok(newshopCountVO);
+        }
+        return R.ok(staffSaleVOS);
+    }
+
     @ApiOperation(value = "员工业绩")
     @PostMapping("/staffSale")
     @PreAuthorize("hasAuthority('sys:sale:staffSale')")
-    public R<PageBean<SaleOrderVO>> staffSale(@RequestBody StaffPageDTO staffPageDTO) {
-        Page<ActivitySaleOrder> page=new Page(staffPageDTO.getCurrent(),staffPageDTO.getSize());
+    public R<PageBean<SaleRecordVO>> staffSale(@RequestBody StaffPageDTO staffPageDTO) {
+        Page<ActivitySaleRecord> page=new Page(staffPageDTO.getCurrent(),staffPageDTO.getSize());
 //        QueryWrapper queryWrapper= new QueryWrapper<ActivitySaleRecord>().eq("activity_id",staffPageDTO.getActivityId());
 //        if(staffPageDTO.getUserId()!=null && StringUtils.isNotEmpty(staffPageDTO.getUserId())){
 //            queryWrapper.eq("user_id",staffPageDTO.getUserId());
@@ -216,6 +245,37 @@ public class SaleController {
 //            queryWrapper.eq("product_id",staffPageDTO.getProductId());
 //        }
 //        queryWrapper.orderByDesc("sale_time");
+        page= saleRecordService.staffSale(page,staffPageDTO);
+
+        PageBean<SaleRecordVO> resultPage=new PageBean<SaleRecordVO>();
+        List<SaleRecordVO> list=new ArrayList<>();
+        for (ActivitySaleRecord saleRecord: page.getRecords()) {
+            SaleRecordVO saleRecordVO=new SaleRecordVO();
+            BeanUtils.copyProperties(saleRecord,saleRecordVO);
+            saleRecordVO.setFiles(JSONArray.parseArray(saleRecord.getFiles(),String.class));
+            Company company1= companyService.getById(saleRecord.getShopCode());
+            if(company1!=null){
+                saleRecordVO.setShopName(company1.getCompayName());
+            }
+            SysUser sysUser=userService.getById(saleRecord.getUserId());
+            if(sysUser!=null){
+                saleRecordVO.setUserName(sysUser.getTrueName());
+            }
+            list.add(saleRecordVO);
+        }
+        resultPage.setRecords(list);
+        resultPage.setCurrent(page.getCurrent());
+        resultPage.setTotal(page.getTotal());
+        resultPage.setPages(page.getPages());
+        return R.ok(resultPage);
+    }
+
+    @ApiOperation(value = "员工业绩(新)")
+    @PostMapping("/staffSaleOrder")
+//    @PreAuthorize("hasAuthority('sys:sale:staffSale')")
+    public R<PageBean<SaleOrderVO>> staffSaleOrder(@RequestBody StaffPageDTO staffPageDTO) {
+        Page<ActivitySaleOrder> page=new Page(staffPageDTO.getCurrent(),staffPageDTO.getSize());
+
         page= activitySaleOrderService.staffSale(page,staffPageDTO);
 
         PageBean<SaleOrderVO> resultPage=new PageBean<SaleOrderVO>();
@@ -313,6 +373,83 @@ public class SaleController {
         }else{
             return R.error("业绩审核失败");
         }
+    }
+
+    @ApiOperation(value = "销售单业绩审核")
+    @PostMapping("/saleOrderAudit")
+//    @PreAuthorize("hasAuthority('sys:sale:saleOrderAudit')")
+    public R saleOrderAudit(@RequestBody SaleOrderAuditDTO saleOrderAuditDTO) {
+
+        ActivitySaleOrder saleOrder = activitySaleOrderService.getById(saleOrderAuditDTO.getSaleOrderId());
+        if (!saleOrder.getSaleOrderStatus().equals(SaleOrderStatus.AUDIT.getValue())) {
+            return R.error("该销售订单不是待审核状态，不能进行审核操作！");
+        }
+        //审核通过的商品销售记录
+        List<ProductAuditDTO> approveProductList = saleOrderAuditDTO.getProductAuditDTOList().stream().filter(productAuditDTO -> productAuditDTO.getApproveStatus().equals(1)).collect(Collectors.toList());
+        //审核驳回的商品销售记录
+        List<ProductAuditDTO> rejectProductList = saleOrderAuditDTO.getProductAuditDTOList().stream().filter(productAuditDTO -> productAuditDTO.getApproveStatus().equals(2)).collect(Collectors.toList());
+
+        //对销售单的状态进行修改
+        if (approveProductList.size() == 0) {
+            saleOrder.setSaleOrderStatus(SaleOrderStatus.REJECT.getValue());
+        } else if (approveProductList.size() == saleOrderAuditDTO.getProductAuditDTOList().size()) {
+            saleOrder.setSaleOrderStatus(SaleOrderStatus.APPROVE.getValue());
+        } else {
+            saleOrder.setSaleOrderStatus(SaleOrderStatus.PART_APPROVE.getValue());
+        }
+        activitySaleOrderService.updateById(saleOrder);
+
+
+        //对审核通过的产品销售记录做修改
+        if (!CollectionUtils.isEmpty(approveProductList)) {
+            List<ActivitySaleRecord> saleRecordList = saleRecordService.list(new QueryWrapper<ActivitySaleRecord>().in("pkid", approveProductList.stream().map(ProductAuditDTO::getSaleRecordId).collect(Collectors.toList())));
+            saleRecordList.forEach(activitySaleRecord -> activitySaleRecord.setApproveStatus("1"));
+            boolean flag = saleRecordService.updateBatchById(saleRecordList);
+            if (flag) {
+                //添加圈子消息
+                List<ActivityCircle> activityCircleList = new ArrayList<>();
+                for (ActivitySaleRecord saleRecord : saleRecordList) {
+                    ActivityCircle activityCircle = new ActivityCircle();
+                    activityCircle.setUserId(saleRecord.getUserId());
+                    activityCircle.setActivityId(saleRecord.getActivityId());
+                    activityCircle.setSaleId(saleRecord.getPkid());
+                    activityCircle.setCreateTime(new Date());
+                    activityCircleList.add(activityCircle);
+                }
+                circleService.saveBatch(activityCircleList);
+            }
+        }
+
+        //对审核驳回的产品销售记录做修改
+        if (!CollectionUtils.isEmpty(rejectProductList)) {
+            List<ActivitySaleRecord> saleRecordList = saleRecordService.list(new QueryWrapper<ActivitySaleRecord>().in("pkid", rejectProductList.stream().map(ProductAuditDTO::getSaleRecordId).collect(Collectors.toList())));
+            saleRecordList.forEach(activitySaleRecord -> activitySaleRecord.setApproveStatus("2"));
+            saleRecordService.updateBatchById(saleRecordList);
+        }
+
+        if (!CollectionUtils.isEmpty(approveProductList) && !CollectionUtils.isEmpty(rejectProductList)) {
+            try {
+                WxApprovalRequDTO approvalRequDTO = new WxApprovalRequDTO();
+                SysUser user = userService.getById(saleOrder.getUserId());
+                if (saleOrder.getSaleOrderStatus().equals(SaleOrderStatus.APPROVE.getValue())) {
+                    approvalRequDTO.setApproverStatus("审核通过");
+                } else if (saleOrder.getSaleOrderStatus().equals(SaleOrderStatus.PART_APPROVE.getValue())) {
+                    approvalRequDTO.setApproverStatus("部分审核通过");
+                } else if (saleOrder.getSaleOrderStatus().equals(SaleOrderStatus.REJECT.getValue())) {
+                    approvalRequDTO.setApproverStatus("驳回");
+                }
+                approvalRequDTO.setOpenId(user.getOpenId());
+                SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm");
+                approvalRequDTO.setDate(sdf.format(new Date()));
+                approvalRequDTO.setDesc("您的业绩销售订单已审核完毕，请注意查看");
+                approvalRequDTO.setReason("");
+                MessageSendUtil.sendApprovalMessage(approvalRequDTO);
+            } catch (Exception e) {
+
+            }
+        }
+
+        return R.ok();
     }
 
 }

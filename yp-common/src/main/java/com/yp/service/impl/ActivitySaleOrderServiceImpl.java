@@ -6,7 +6,10 @@ import com.yp.dao.ActivitySaleOrderMapper;
 import com.yp.dto.manage.sale.StaffPageDTO;
 import com.yp.entity.ActivitySaleOrder;
 import com.yp.service.ActivitySaleOrderService;
+import com.yp.vo.manage.sale.StaffSaleVO;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 
 /**
@@ -24,5 +27,10 @@ public class ActivitySaleOrderServiceImpl extends ServiceImpl<ActivitySaleOrderM
     @Override
     public Page<ActivitySaleOrder> staffSale(Page<ActivitySaleOrder> page, StaffPageDTO staffPageDTO) {
         return baseMapper.staffSale(page, staffPageDTO);
+    }
+
+    @Override
+    public List<StaffSaleVO> queryStaffSale(String activityId, String targetUntil) {
+        return baseMapper.queryStaffSale(activityId, targetUntil);
     }
 }

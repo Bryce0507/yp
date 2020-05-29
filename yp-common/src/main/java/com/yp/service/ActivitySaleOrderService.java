@@ -5,6 +5,9 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.yp.dto.manage.sale.StaffPageDTO;
 import com.yp.entity.ActivitySaleOrder;
 import com.yp.entity.ActivitySaleRecord;
+import com.yp.vo.manage.sale.StaffSaleVO;
+
+import java.util.List;
 
 
 /**
@@ -19,4 +22,6 @@ public interface ActivitySaleOrderService extends IService<ActivitySaleOrder> {
 
 
     Page<ActivitySaleOrder> staffSale(Page<ActivitySaleOrder> page, StaffPageDTO staffPageDTO);
+
+    List<StaffSaleVO> queryStaffSale(String activityId, String targetUntil);
 }

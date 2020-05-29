@@ -31,4 +31,6 @@ import java.util.List;
 public interface ActivitySaleOrderMapper extends BaseMapper<ActivitySaleOrder> {
 
     Page<ActivitySaleOrder> staffSale(Page page, @Param("staffPageDTO") StaffPageDTO staffPageDTO);
+
+    List<StaffSaleVO> queryStaffSale(@Param("activityId") String activityId,@Param("orderUntil") String orderUntil);
 }
